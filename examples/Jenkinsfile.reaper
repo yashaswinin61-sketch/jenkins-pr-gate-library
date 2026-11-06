@@ -1,0 +1,23 @@
+// Scheduled job that cleans up CI VMs left behind by crashed builds or agents.
+@Library('prgate') _
+
+pipeline {
+    agent { label 'linux' }
+    triggers { cron('H/30 * * * *') }
+    options {
+        disableConcurrentBuilds()
+        buildDiscarder(logRotator(numToKeepStr: '200'))
+    }
+    parameters {
+        booleanParam(name: 'DRY_RUN', defaultValue: false, description: 'List expired VMs without deleting')
+    }
+    stages {
+        stage('Reap expired VMs') {
+            steps {
+                withCredentials([file(credentialsId: 'openstack-clouds-yaml', variable: 'OS_CLIENT_CONFIG_FILE')]) {
+                    script { reapExpiredVms(dryRun: params.DRY_RUN) }
+                }
+            }
+        }
+    }
+}

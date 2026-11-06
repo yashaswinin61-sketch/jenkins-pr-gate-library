@@ -1,0 +1,19 @@
+// Jenkinsfile in an application repo. The library is loaded globally (see local/casc.yaml).
+@Library('prgate') _
+
+prGate(
+    agentLabel : 'linux',
+    testGroups : [
+        lint      : 'make lint',
+        unit      : 'make test-unit',
+        typecheck : 'make typecheck',
+    ],
+    integration: [
+        image     : 'ubuntu-22.04',
+        flavor    : 'm1.medium',
+        network   : 'ci-net',
+        keyName   : 'jenkins-ci',
+        ttlMinutes: 120,
+        command   : './ci/integration.sh',   // gets VM_IP and VM_USER in its environment
+    ],
+)

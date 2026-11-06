@@ -1,0 +1,45 @@
+plugins {
+    id 'groovy'
+}
+
+repositories {
+    mavenCentral()
+    maven { url 'https://repo.jenkins-ci.org/public/' }
+}
+
+java {
+    toolchain { languageVersion = JavaLanguageVersion.of(21) }
+}
+
+dependencies {
+    // Same Groovy line Jenkins runs pipelines with, so tests catch syntax Jenkins can't parse.
+    implementation 'org.codehaus.groovy:groovy-all:2.4.21'
+    testImplementation 'com.lesfurets:jenkins-pipeline-unit:1.31'
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.11.3'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+sourceSets {
+    main {
+        groovy { srcDirs = ['src', 'vars'] }
+        resources { srcDirs = ['resources'] }
+    }
+    test {
+        groovy { srcDirs = ['test/groovy'] }
+        resources { srcDirs = ['test/resources'] }
+    }
+}
+
+test {
+    useJUnitPlatform()
+    testLogging {
+        events 'passed', 'failed', 'skipped'
+        exceptionFormat 'full'
+    }
+}
+
+tasks.register('shellTest', Exec) {
+    description = 'Runs the vm.sh tests with the openstack CLI stubbed'
+    commandLine 'bash', 'test/vm_sh_test.sh'
+}
+check.dependsOn shellTest

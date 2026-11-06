@@ -1,0 +1,39 @@
+jenkins:
+  systemMessage: "Local sandbox for jenkins-pr-gate-library"
+  numExecutors: 2
+  labelString: "linux"
+  securityRealm:
+    local:
+      allowsSignup: false
+      users:
+        - id: admin
+          password: "${JENKINS_ADMIN_PASSWORD}"
+  authorizationStrategy: loggedInUsersCanDoAnything
+
+unclassified:
+  globalLibraries:
+    libraries:
+      - name: prgate
+        defaultVersion: main
+        implicit: false
+        allowVersionOverride: true
+        retriever:
+          legacySCM:
+            scm:
+              filesystem:
+                path: /var/jenkins_lib
+                copyHidden: false
+
+jobs:
+  - script: >
+      pipelineJob('demo-pr-gate') {
+        definition {
+          cps {
+            sandbox(true)
+            script('''
+              @Library('prgate') _
+              prGate(testGroups: [lint: 'echo lint ok', unit: 'echo unit ok'])
+            ''')
+          }
+        }
+      }
